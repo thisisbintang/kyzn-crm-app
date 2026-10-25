@@ -28,6 +28,7 @@ import { useLeadStore } from "../-lead-store"
 
 export const Route = createFileRoute("/leads/$uuid/detail")({
   component: RouteComponent,
+  staticData: { title: "Lead Details" },
 })
 
 function formatDate(date: Date): string {

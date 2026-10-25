@@ -6,6 +6,7 @@ import { useLeadStore } from "./-lead-store"
 
 export const Route = createFileRoute("/leads/")({
   component: RouteComponent,
+  staticData: { title: "Leads" },
 })
 
 function RouteComponent() {
