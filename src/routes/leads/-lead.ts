@@ -50,6 +50,20 @@ export function isActiveLeadStatus(status: LeadStatus): boolean {
   return ACTIVE_LEAD_STATUSES.includes(status)
 }
 
+const LEAD_STATUS_TRANSITIONS: Record<LeadStatus, LeadStatus[]> = {
+  pending: ["processing", "failed"],
+  processing: ["success", "failed", "pending"],
+  success: ["processing"],
+  failed: ["processing"],
+}
+
+export function canTransitionLeadStatus(
+  from: LeadStatus,
+  to: LeadStatus
+): boolean {
+  return LEAD_STATUS_TRANSITIONS[from].includes(to)
+}
+
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
@@ -66,14 +80,15 @@ export function normalizePhoneNumber(phoneNumber: string): string {
 
 export function findLeadConflict(
   leads: Lead[],
-  input: Pick<NewLeadInput, "email" | "phoneNumber">
+  input: Pick<NewLeadInput, "email" | "phoneNumber">,
+  excludeLeadId?: string
 ): LeadConflict {
   const email = normalizeEmail(input.email)
   const phoneNumber = normalizePhoneNumber(input.phoneNumber)
 
   return leads.reduce<LeadConflict>(
     (conflict, lead) => {
-      if (!isActiveLeadStatus(lead.status)) {
+      if (lead.id === excludeLeadId || !isActiveLeadStatus(lead.status)) {
         return conflict
       }
 

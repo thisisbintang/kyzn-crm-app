@@ -3,8 +3,13 @@ import { createJSONStorage, persist } from "zustand/middleware"
 
 import {
   type Lead,
+  type LeadConflict,
+  type LeadStatus,
   type NewLeadInput,
+  canTransitionLeadStatus,
+  findLeadById,
   findLeadConflict,
+  isActiveLeadStatus,
   reviveLead,
 } from "./-lead"
 
@@ -20,9 +25,18 @@ export type AddLeadResult =
       }
     }
 
+export type ChangeLeadStatusResult =
+  | { ok: true; lead: Lead }
+  | {
+      ok: false
+      reason: "not-found" | "invalid-transition" | "conflict"
+      conflict?: LeadConflict
+    }
+
 type LeadState = {
   leads: Lead[]
   addLead: (input: NewLeadInput) => AddLeadResult
+  changeLeadStatus: (id: string, status: LeadStatus) => ChangeLeadStatusResult
 }
 
 function createLead(input: NewLeadInput): Lead {
@@ -69,6 +83,47 @@ export const useLeadStore = create<LeadState>()(
         set((state) => ({ leads: [lead, ...state.leads] }))
 
         return { ok: true, lead }
+      },
+      changeLeadStatus: (id, status) => {
+        const lead = findLeadById(get().leads, id)
+
+        if (!lead) {
+          return { ok: false, reason: "not-found" }
+        }
+
+        if (lead.status === status) {
+          return { ok: true, lead }
+        }
+
+        if (!canTransitionLeadStatus(lead.status, status)) {
+          return { ok: false, reason: "invalid-transition" }
+        }
+
+        if (isActiveLeadStatus(status)) {
+          const conflict = findLeadConflict(get().leads, lead, lead.id)
+
+          if (conflict.email || conflict.phoneNumber) {
+            return { ok: false, reason: "conflict", conflict }
+          }
+        }
+
+        const updatedLead: Lead = {
+          ...lead,
+          status,
+          lastContactDate:
+            lead.lastContactDate === null &&
+            (status === "processing" || status === "success")
+              ? new Date()
+              : lead.lastContactDate,
+        }
+
+        set((state) => ({
+          leads: state.leads.map((item) =>
+            item.id === id ? updatedLead : item
+          ),
+        }))
+
+        return { ok: true, lead: updatedLead }
       },
     }),
     {

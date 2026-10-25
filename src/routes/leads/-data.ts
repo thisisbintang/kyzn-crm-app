@@ -1,3 +1,7 @@
+import { type VariantProps } from "class-variance-authority"
+
+import { badgeVariants } from "@/components/ui/badge"
+
 import type { LeadStatus } from "./-lead"
 
 export const STATUSES: LeadStatus[] = [
@@ -55,3 +59,15 @@ export const STATUS_ITEMS = STATUSES.map((status) => ({
   value: status,
   label: getLeadStatusLabel(status),
 }))
+
+type LeadStatusBadgeVariant = VariantProps<typeof badgeVariants>["variant"]
+
+export const LEAD_STATUS_BADGE_VARIANTS: Record<
+  LeadStatus,
+  LeadStatusBadgeVariant
+> = {
+  pending: "outline",
+  processing: "default",
+  success: "secondary",
+  failed: "destructive",
+}

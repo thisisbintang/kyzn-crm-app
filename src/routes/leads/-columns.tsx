@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router"
 import { createColumnHelper } from "@tanstack/react-table"
 import { format } from "date-fns"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,11 +12,16 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+import { LEAD_STATUS_BADGE_VARIANTS, getLeadStatusLabel } from "./-data"
 import { type DataTableFeatures } from "./-data-table-features"
 import { type Lead } from "./-lead"
+import { LeadStatusRadioGroup } from "./-lead-status-menu"
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, Lead>()
@@ -32,6 +38,15 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.accessor("status", {
     header: "Status",
+    cell: ({ getValue }) => {
+      const status = getValue()
+
+      return (
+        <Badge variant={LEAD_STATUS_BADGE_VARIANTS[status]}>
+          {getLeadStatusLabel(status)}
+        </Badge>
+      )
+    },
   }),
   columnHelper.accessor("leadSource", {
     header: "Lead Source",
@@ -46,7 +61,7 @@ export const columns = columnHelper.columns([
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Creation Date
-        <IconArrowNarrowDown className="ml-2 h-4 w-4" />
+        <IconArrowNarrowDown data-icon="inline-end" />
       </Button>
     ),
     cell: ({ getValue }) => format(getValue(), "dd MMM yyyy"),
@@ -59,7 +74,7 @@ export const columns = columnHelper.columns([
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Next Follow Up Date
-        <IconArrowNarrowDown className="ml-2 h-4 w-4" />
+        <IconArrowNarrowDown data-icon="inline-end" />
       </Button>
     ),
     cell: ({ getValue }) => format(getValue(), "dd MMM yyyy"),
@@ -72,11 +87,9 @@ export const columns = columnHelper.columns([
 
       return (
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" className="h-8 w-8 p-0" />}
-          >
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
             <span className="sr-only">Open menu</span>
-            <IconDots className="h-4 w-4" />
+            <IconDots />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuGroup>
@@ -86,6 +99,12 @@ export const columns = columnHelper.columns([
               >
                 Copy lead ID
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Change status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <LeadStatusRadioGroup lead={lead} />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 render={

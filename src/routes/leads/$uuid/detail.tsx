@@ -1,10 +1,9 @@
-import { IconArrowLeft, IconCopy } from "@tabler/icons-react"
+import { IconArrowLeft, IconChevronDown, IconCopy } from "@tabler/icons-react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { type VariantProps } from "class-variance-authority"
 import { format } from "date-fns"
 import { type ReactNode } from "react"
 
-import { Badge, badgeVariants } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -14,25 +13,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/toast"
 
-import { getLeadStatusLabel } from "../-data"
-import { type Lead, type LeadStatus, findLeadById } from "../-lead"
+import { LEAD_STATUS_BADGE_VARIANTS, getLeadStatusLabel } from "../-data"
+import { type Lead, findLeadById } from "../-lead"
+import { LeadStatusRadioGroup } from "../-lead-status-menu"
 import { useLeadStore } from "../-lead-store"
 
 export const Route = createFileRoute("/leads/$uuid/detail")({
   component: RouteComponent,
 })
-
-type BadgeVariant = VariantProps<typeof badgeVariants>["variant"]
-
-const STATUS_BADGE_VARIANTS: Record<LeadStatus, BadgeVariant> = {
-  pending: "outline",
-  processing: "default",
-  success: "secondary",
-  failed: "destructive",
-}
 
 function formatDate(date: Date): string {
   return format(date, "dd MMM yyyy")
@@ -56,7 +52,7 @@ function DetailItem({
 function BackToLeadsButton() {
   return (
     <Button render={<Link to="/leads" />}>
-      <IconArrowLeft />
+      <IconArrowLeft data-icon="inline-start" />
       Back to Leads
     </Button>
   )
@@ -86,9 +82,22 @@ function LeadDetailCard({ lead }: { lead: Lead }) {
         <CardTitle>{lead.fullName}</CardTitle>
         <CardDescription>{lead.email}</CardDescription>
         <CardAction>
-          <Badge variant={STATUS_BADGE_VARIANTS[lead.status]}>
-            {getLeadStatusLabel(lead.status)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={LEAD_STATUS_BADGE_VARIANTS[lead.status]}>
+              {getLeadStatusLabel(lead.status)}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="outline" size="sm" />}
+              >
+                Change status
+                <IconChevronDown data-icon="inline-end" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <LeadStatusRadioGroup lead={lead} />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">

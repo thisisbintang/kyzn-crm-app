@@ -162,3 +162,172 @@ describe("persistence", () => {
     expect(useLeadStore.getState().leads).toEqual([])
   })
 })
+
+describe("changeLeadStatus", () => {
+  function addPendingLead() {
+    const result = useLeadStore.getState().addLead(createInput())
+
+    if (!result.ok) {
+      throw new Error("Expected the lead to be created")
+    }
+
+    return result.lead
+  }
+
+  it("moves a pending lead to processing and fills the last contact date", () => {
+    const lead = addPendingLead()
+
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus(lead.id, "processing")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.status).toBe("processing")
+    expect(result.lead.lastContactDate).toBeInstanceOf(Date)
+    expect(useLeadStore.getState().leads).toEqual([result.lead])
+  })
+
+  it("keeps an existing last contact date", () => {
+    const lastContactDate = new Date("2026-01-15T00:00:00.000Z")
+    const added = useLeadStore
+      .getState()
+      .addLead(createInput({ lastContactDate }))
+
+    if (!added.ok) {
+      throw new Error("Expected the lead to be created")
+    }
+
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus(added.lead.id, "processing")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.lastContactDate).toEqual(lastContactDate)
+  })
+
+  it("fills the last contact date when a processing lead succeeds", () => {
+    const lead = addPendingLead()
+    useLeadStore.setState({ leads: [{ ...lead, status: "processing" }] })
+
+    const result = useLeadStore.getState().changeLeadStatus(lead.id, "success")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.status).toBe("success")
+    expect(result.lead.lastContactDate).toBeInstanceOf(Date)
+  })
+
+  it("does not fill the last contact date when a lead fails", () => {
+    const lead = addPendingLead()
+
+    const result = useLeadStore.getState().changeLeadStatus(lead.id, "failed")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.lastContactDate).toBeNull()
+  })
+
+  it("rejects transitions outside the state machine", () => {
+    const lead = addPendingLead()
+
+    const result = useLeadStore.getState().changeLeadStatus(lead.id, "success")
+
+    expect(result).toEqual({ ok: false, reason: "invalid-transition" })
+    expect(useLeadStore.getState().leads[0].status).toBe("pending")
+  })
+
+  it("returns not-found for an unknown lead", () => {
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus("missing", "processing")
+
+    expect(result).toEqual({ ok: false, reason: "not-found" })
+  })
+
+  it("treats the current status as a no-op", () => {
+    const lead = addPendingLead()
+
+    const result = useLeadStore.getState().changeLeadStatus(lead.id, "pending")
+
+    expect(result).toEqual({ ok: true, lead })
+  })
+
+  it("blocks reopening a closed lead that conflicts by email", () => {
+    const closed = addPendingLead()
+    useLeadStore.setState({ leads: [{ ...closed, status: "success" }] })
+
+    const active = useLeadStore
+      .getState()
+      .addLead(createInput({ phoneNumber: "08999999999" }))
+    expect(active.ok).toBe(true)
+
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus(closed.id, "processing")
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "conflict",
+      conflict: { email: true, phoneNumber: false },
+    })
+    expect(
+      useLeadStore.getState().leads.find((lead) => lead.id === closed.id)
+        ?.status
+    ).toBe("success")
+  })
+
+  it("blocks reopening a closed lead that conflicts by phone number", () => {
+    const closed = addPendingLead()
+    useLeadStore.setState({ leads: [{ ...closed, status: "failed" }] })
+
+    const active = useLeadStore
+      .getState()
+      .addLead(createInput({ email: "other@example.com" }))
+    expect(active.ok).toBe(true)
+
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus(closed.id, "processing")
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "conflict",
+      conflict: { email: false, phoneNumber: true },
+    })
+  })
+
+  it("allows reopening when other leads with the same contact details are closed", () => {
+    const first = addPendingLead()
+    const second = useLeadStore
+      .getState()
+      .addLead(
+        createInput({ email: "second@example.com", phoneNumber: "08999999999" })
+      )
+
+    if (!second.ok) {
+      throw new Error("Expected the second lead to be created")
+    }
+
+    useLeadStore.setState({
+      leads: [
+        { ...second.lead, status: "failed", email: first.email },
+        { ...first, status: "success" },
+      ],
+    })
+
+    const result = useLeadStore
+      .getState()
+      .changeLeadStatus(first.id, "processing")
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.status).toBe("processing")
+  })
+})

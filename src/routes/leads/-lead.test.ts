@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   type Lead,
+  canTransitionLeadStatus,
   findLeadById,
   findLeadConflict,
   isActiveLeadStatus,
@@ -53,6 +54,30 @@ describe("isActiveLeadStatus", () => {
   })
 })
 
+describe("canTransitionLeadStatus", () => {
+  it("allows the forward transitions", () => {
+    expect(canTransitionLeadStatus("pending", "processing")).toBe(true)
+    expect(canTransitionLeadStatus("pending", "failed")).toBe(true)
+    expect(canTransitionLeadStatus("processing", "success")).toBe(true)
+    expect(canTransitionLeadStatus("processing", "failed")).toBe(true)
+    expect(canTransitionLeadStatus("processing", "pending")).toBe(true)
+  })
+
+  it("allows reopening closed leads through processing", () => {
+    expect(canTransitionLeadStatus("success", "processing")).toBe(true)
+    expect(canTransitionLeadStatus("failed", "processing")).toBe(true)
+  })
+
+  it("rejects jumps outside the state machine", () => {
+    expect(canTransitionLeadStatus("pending", "success")).toBe(false)
+    expect(canTransitionLeadStatus("success", "failed")).toBe(false)
+    expect(canTransitionLeadStatus("success", "pending")).toBe(false)
+    expect(canTransitionLeadStatus("failed", "success")).toBe(false)
+    expect(canTransitionLeadStatus("failed", "pending")).toBe(false)
+    expect(canTransitionLeadStatus("pending", "pending")).toBe(false)
+  })
+})
+
 describe("findLeadConflict", () => {
   it("detects a duplicate email case-insensitively", () => {
     const conflict = findLeadConflict([createLead()], {
@@ -91,6 +116,18 @@ describe("findLeadConflict", () => {
         email: "budi@example.com",
         phoneNumber: "08123456789",
       }
+    )
+
+    expect(conflict).toEqual({ email: false, phoneNumber: false })
+  })
+
+  it("ignores the excluded lead", () => {
+    const lead = createLead()
+
+    const conflict = findLeadConflict(
+      [lead],
+      { email: lead.email, phoneNumber: lead.phoneNumber },
+      lead.id
     )
 
     expect(conflict).toEqual({ email: false, phoneNumber: false })
