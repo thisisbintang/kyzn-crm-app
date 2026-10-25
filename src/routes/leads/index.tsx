@@ -12,5 +12,9 @@ export const Route = createFileRoute("/leads/")({
 function RouteComponent() {
   const leads = useLeadStore((state) => state.leads)
 
-  return <DataTable columns={columns} data={leads} />
+  return (
+    <div className="px-6">
+      <DataTable columns={columns} data={leads} />
+    </div>
+  )
 }

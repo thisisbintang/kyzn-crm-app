@@ -177,7 +177,7 @@ function RouteComponent() {
   const lead = findLeadById(leads, uuid)
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 px-6">
       <BackToLeadsButton />
       {lead ? <LeadDetailCard lead={lead} /> : <LeadNotFound />}
     </div>
