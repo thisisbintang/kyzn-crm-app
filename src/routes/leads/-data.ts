@@ -47,7 +47,11 @@ export const ASSIGNED_SALES_CONSULTANTS_ITEMS = ASSIGNED_SALES_CONSULTANTS.map(
   })
 )
 
+export function getLeadStatusLabel(status: LeadStatus): string {
+  return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
 export const STATUS_ITEMS = STATUSES.map((status) => ({
   value: status,
-  label: status.charAt(0).toUpperCase() + status.slice(1),
+  label: getLeadStatusLabel(status),
 }))

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   type Lead,
+  findLeadById,
   findLeadConflict,
   isActiveLeadStatus,
   normalizeEmail,
@@ -93,6 +94,24 @@ describe("findLeadConflict", () => {
     )
 
     expect(conflict).toEqual({ email: false, phoneNumber: false })
+  })
+})
+
+describe("findLeadById", () => {
+  it("returns the matching lead", () => {
+    const lead = createLead()
+
+    expect(findLeadById([createLead({ id: "lead-0" }), lead], "lead-1")).toBe(
+      lead
+    )
+  })
+
+  it("returns undefined when the id does not match", () => {
+    expect(findLeadById([createLead()], "missing")).toBeUndefined()
+  })
+
+  it("returns undefined for an empty list", () => {
+    expect(findLeadById([], "lead-1")).toBeUndefined()
   })
 })
 

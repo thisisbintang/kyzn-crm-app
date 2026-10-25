@@ -94,6 +94,10 @@ export function findLeadConflict(
   )
 }
 
+export function findLeadById(leads: Lead[], id: string): Lead | undefined {
+  return leads.find((lead) => lead.id === id)
+}
+
 function toDate(value: unknown): Date | null {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value
