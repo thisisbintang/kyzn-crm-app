@@ -32,7 +32,7 @@ export function SiteHeader() {
             variant="ghost"
             render={
               <a
-                href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
+                href="https://github.com/thisisbintang/kyzn-crm-app"
                 rel="noopener noreferrer"
                 target="_blank"
                 className="dark:text-foreground"
