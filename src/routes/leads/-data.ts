@@ -1,13 +1,13 @@
-import type { Lead } from "./-columns"
+import type { LeadStatus } from "./-lead"
 
-export const STATUSES: Lead["status"][] = [
+export const STATUSES: LeadStatus[] = [
   "failed",
   "pending",
   "processing",
   "success",
 ]
 
-export const ASSIGNED_SALES_CONSULTANS = [
+export const ASSIGNED_SALES_CONSULTANTS = [
   "John Doe",
   "Jane Smith",
   "Michael Johnson",
@@ -23,12 +23,24 @@ export const LEAD_SOURCES = [
   "Advertisement",
 ]
 
+const INTERESTED_VENUES = [
+  "KYZN Bekasi",
+  "KYZN Kuningan",
+  "KYZN BSD",
+  "KYZN Surabaya",
+]
+
 export const LEAD_SOURCES_ITEMS = LEAD_SOURCES.map((source) => ({
   value: source,
   label: source,
 }))
 
-export const ASSIGNED_SALES_CONSULTANS_ITEMS = ASSIGNED_SALES_CONSULTANS.map(
+export const INTERESTED_VENUES_ITEMS = INTERESTED_VENUES.map((venue) => ({
+  value: venue,
+  label: venue,
+}))
+
+export const ASSIGNED_SALES_CONSULTANTS_ITEMS = ASSIGNED_SALES_CONSULTANTS.map(
   (consultant) => ({
     value: consultant,
     label: consultant,

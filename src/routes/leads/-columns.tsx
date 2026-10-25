@@ -1,4 +1,5 @@
 import { IconArrowNarrowDown, IconDots } from "@tabler/icons-react"
+import { Link } from "@tanstack/react-router"
 import { createColumnHelper } from "@tanstack/react-table"
 import { format } from "date-fns"
 
@@ -14,22 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { type DataTableFeatures } from "./-data-table-features"
-
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type Lead = {
-  id: string
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
-  fullName: string
-  phoneNumber: string
-  leadSource: string
-  interestedVenue: string
-  assignedSalesConsultant: string
-  creationDate: Date
-  lastContactDate: Date
-  nextFollowUpDate: Date
-}
+import { type Lead } from "./-lead"
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, Lead>()
@@ -101,7 +87,13 @@ export const columns = columnHelper.columns([
                 Copy lead ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>View lead details</DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link to="/leads/$uuid/detail" params={{ uuid: lead.id }} />
+                }
+              >
+                View lead details
+              </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/table"
 
 import {
-  ASSIGNED_SALES_CONSULTANS_ITEMS,
+  ASSIGNED_SALES_CONSULTANTS_ITEMS,
   LEAD_SOURCES_ITEMS,
   STATUS_ITEMS,
 } from "./-data"
@@ -118,7 +118,7 @@ export function DataTable<TData extends RowData>({
         </Select>
 
         <Select
-          items={ASSIGNED_SALES_CONSULTANS_ITEMS}
+          items={ASSIGNED_SALES_CONSULTANTS_ITEMS}
           value={
             (table
               .getColumn("assignedSalesConsultant")
@@ -133,7 +133,7 @@ export function DataTable<TData extends RowData>({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {ASSIGNED_SALES_CONSULTANS_ITEMS.map((item) => (
+              {ASSIGNED_SALES_CONSULTANTS_ITEMS.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>

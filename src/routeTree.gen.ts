@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LeadsIndexRouteImport } from './routes/leads/index'
+import { Route as LeadsUuidDetailRouteImport } from './routes/leads/$uuid/detail'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const LeadsIndexRoute = LeadsIndexRouteImport.update({
   path: '/leads/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeadsUuidDetailRoute = LeadsUuidDetailRouteImport.update({
+  id: '/leads/$uuid/detail',
+  path: '/leads/$uuid/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leads/': typeof LeadsIndexRoute
+  '/leads/$uuid/detail': typeof LeadsUuidDetailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leads': typeof LeadsIndexRoute
+  '/leads/$uuid/detail': typeof LeadsUuidDetailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/leads/': typeof LeadsIndexRoute
+  '/leads/$uuid/detail': typeof LeadsUuidDetailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leads/'
+  fullPaths: '/' | '/leads/' | '/leads/$uuid/detail'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leads'
-  id: '__root__' | '/' | '/leads/'
+  to: '/' | '/leads' | '/leads/$uuid/detail'
+  id: '__root__' | '/' | '/leads/' | '/leads/$uuid/detail'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeadsIndexRoute: typeof LeadsIndexRoute
+  LeadsUuidDetailRoute: typeof LeadsUuidDetailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeadsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leads/$uuid/detail': {
+      id: '/leads/$uuid/detail'
+      path: '/leads/$uuid/detail'
+      fullPath: '/leads/$uuid/detail'
+      preLoaderRoute: typeof LeadsUuidDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeadsIndexRoute: LeadsIndexRoute,
+  LeadsUuidDetailRoute: LeadsUuidDetailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

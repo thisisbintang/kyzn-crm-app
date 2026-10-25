@@ -3,6 +3,7 @@ import { StrictMode } from "react"
 import ReactDOM from "react-dom/client"
 
 import { ThemeProvider } from "@/components/theme-provider.tsx"
+import { Toaster } from "@/components/ui/toast"
 
 import "./index.css"
 // Import the generated route tree
@@ -26,6 +27,7 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <ThemeProvider>
         <RouterProvider router={router} />
+        <Toaster />
       </ThemeProvider>
     </StrictMode>
   )

@@ -2,6 +2,7 @@
 
 import { type Icon, IconCirclePlusFilled } from "@tabler/icons-react"
 import { Link } from "@tanstack/react-router"
+import * as React from "react"
 
 import {
   SidebarGroup,
@@ -10,6 +11,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+
+import { CreateLeadDialog } from "./create-lead-dialog"
+import { Dialog, DialogTrigger } from "./ui/dialog"
 
 export function NavMain({
   items,
@@ -20,18 +24,24 @@ export function NavMain({
     icon?: Icon
   }[]
 }) {
+  const [isCreateLeadOpen, setIsCreateLeadOpen] = React.useState(false)
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-            >
-              <IconCirclePlusFilled />
-              <span>Create Lead</span>
-            </SidebarMenuButton>
+            <Dialog open={isCreateLeadOpen} onOpenChange={setIsCreateLeadOpen}>
+              <SidebarMenuButton
+                render={<DialogTrigger />}
+                tooltip="Quick Create"
+                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              >
+                <IconCirclePlusFilled />
+                <span>Create Lead</span>
+              </SidebarMenuButton>
+              <CreateLeadDialog onCreated={() => setIsCreateLeadOpen(false)} />
+            </Dialog>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
