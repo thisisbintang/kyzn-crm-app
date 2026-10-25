@@ -25,6 +25,17 @@ export type AddLeadResult =
       }
     }
 
+export type UpdateLeadResult =
+  | { ok: true; lead: Lead }
+  | { ok: false; reason: "not-found" }
+  | {
+      ok: false
+      errors: {
+        email?: string
+        phoneNumber?: string
+      }
+    }
+
 export type ChangeLeadStatusResult =
   | { ok: true; lead: Lead }
   | {
@@ -36,7 +47,22 @@ export type ChangeLeadStatusResult =
 type LeadState = {
   leads: Lead[]
   addLead: (input: NewLeadInput) => AddLeadResult
+  updateLead: (id: string, input: NewLeadInput) => UpdateLeadResult
   changeLeadStatus: (id: string, status: LeadStatus) => ChangeLeadStatusResult
+}
+
+function conflictToErrors(conflict: LeadConflict): {
+  email?: string
+  phoneNumber?: string
+} {
+  return {
+    ...(conflict.email
+      ? { email: "A lead with this email already exists." }
+      : {}),
+    ...(conflict.phoneNumber
+      ? { phoneNumber: "A lead with this phone number already exists." }
+      : {}),
+  }
 }
 
 function createLead(input: NewLeadInput): Lead {
@@ -63,26 +89,47 @@ export const useLeadStore = create<LeadState>()(
         const conflict = findLeadConflict(get().leads, input)
 
         if (conflict.email || conflict.phoneNumber) {
-          return {
-            ok: false,
-            errors: {
-              ...(conflict.email
-                ? { email: "A lead with this email already exists." }
-                : {}),
-              ...(conflict.phoneNumber
-                ? {
-                    phoneNumber:
-                      "A lead with this phone number already exists.",
-                  }
-                : {}),
-            },
-          }
+          return { ok: false, errors: conflictToErrors(conflict) }
         }
 
         const lead = createLead(input)
         set((state) => ({ leads: [lead, ...state.leads] }))
 
         return { ok: true, lead }
+      },
+      updateLead: (id, input) => {
+        const lead = findLeadById(get().leads, id)
+
+        if (!lead) {
+          return { ok: false, reason: "not-found" }
+        }
+
+        if (isActiveLeadStatus(lead.status)) {
+          const conflict = findLeadConflict(get().leads, input, id)
+
+          if (conflict.email || conflict.phoneNumber) {
+            return { ok: false, errors: conflictToErrors(conflict) }
+          }
+        }
+
+        const updatedLead: Lead = {
+          ...lead,
+          email: input.email.trim(),
+          fullName: input.fullName.trim(),
+          phoneNumber: input.phoneNumber.trim(),
+          leadSource: input.leadSource,
+          interestedVenue: input.interestedVenue,
+          assignedSalesConsultant: input.assignedSalesConsultant,
+          nextFollowUpDate: input.nextFollowUpDate,
+        }
+
+        set((state) => ({
+          leads: state.leads.map((item) =>
+            item.id === id ? updatedLead : item
+          ),
+        }))
+
+        return { ok: true, lead: updatedLead }
       },
       changeLeadStatus: (id, status) => {
         const lead = findLeadById(get().leads, id)

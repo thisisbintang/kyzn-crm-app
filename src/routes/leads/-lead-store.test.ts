@@ -339,3 +339,162 @@ describe("changeLeadStatus", () => {
     expect(result.lead.status).toBe("processing")
   })
 })
+
+describe("updateLead", () => {
+  function addTestLead(input: Partial<NewLeadInput> = {}) {
+    const result = useLeadStore.getState().addLead(createInput(input))
+
+    if (!result.ok) {
+      throw new Error("Expected the lead to be created")
+    }
+
+    return result.lead
+  }
+
+  it("updates editable fields and keeps system fields", () => {
+    const lead = addTestLead()
+    const before = useLeadStore.getState().leads[0]
+
+    const result = useLeadStore.getState().updateLead(lead.id, {
+      email: "  new@example.com  ",
+      fullName: "  Budi Updated  ",
+      phoneNumber: "  08999999999  ",
+      leadSource: "Referral",
+      interestedVenue: "KYZN BSD",
+      assignedSalesConsultant: "Jane Smith",
+      nextFollowUpDate: new Date("2026-03-01T00:00:00.000Z"),
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.email).toBe("new@example.com")
+    expect(result.lead.fullName).toBe("Budi Updated")
+    expect(result.lead.phoneNumber).toBe("08999999999")
+    expect(result.lead.leadSource).toBe("Referral")
+    expect(result.lead.interestedVenue).toBe("KYZN BSD")
+    expect(result.lead.assignedSalesConsultant).toBe("Jane Smith")
+    expect(result.lead.nextFollowUpDate).toEqual(
+      new Date("2026-03-01T00:00:00.000Z")
+    )
+    expect(result.lead.id).toBe(before.id)
+    expect(result.lead.status).toBe(before.status)
+    expect(result.lead.creationDate).toEqual(before.creationDate)
+    expect(result.lead.lastContactDate).toBeNull()
+    expect(useLeadStore.getState().leads).toEqual([result.lead])
+  })
+
+  it("allows keeping the lead's own email and phone number", () => {
+    const lead = addTestLead()
+
+    const result = useLeadStore.getState().updateLead(lead.id, createInput())
+
+    expect(result.ok).toBe(true)
+  })
+
+  it("preserves the last contact date and status", () => {
+    const lead = addTestLead()
+    const processed = useLeadStore
+      .getState()
+      .changeLeadStatus(lead.id, "processing")
+
+    expect(processed.ok).toBe(true)
+    if (!processed.ok) return
+
+    const result = useLeadStore
+      .getState()
+      .updateLead(lead.id, createInput({ fullName: "Budi Santoso II" }))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.status).toBe("processing")
+    expect(result.lead.lastContactDate).toEqual(processed.lead.lastContactDate)
+    expect(result.lead.fullName).toBe("Budi Santoso II")
+  })
+
+  it("rejects an email used by another active lead", () => {
+    const first = addTestLead()
+    addTestLead({ email: "other@example.com", phoneNumber: "08999999999" })
+
+    const result = useLeadStore.getState().updateLead(first.id, {
+      ...createInput(),
+      email: "OTHER@example.com",
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      errors: { email: "A lead with this email already exists." },
+    })
+    expect(
+      useLeadStore.getState().leads.find((item) => item.id === first.id)
+    ).toEqual(first)
+  })
+
+  it("rejects a phone number used by another active lead", () => {
+    const first = addTestLead()
+    addTestLead({ email: "other@example.com", phoneNumber: "08999999999" })
+
+    const result = useLeadStore.getState().updateLead(first.id, {
+      ...createInput({ email: first.email }),
+      phoneNumber: "+62 899-9999-999",
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      errors: { phoneNumber: "A lead with this phone number already exists." },
+    })
+  })
+
+  it("ignores conflicts with closed leads", () => {
+    const first = addTestLead()
+    const closed = addTestLead({
+      email: "closed@example.com",
+      phoneNumber: "08999999999",
+    })
+    useLeadStore.setState((state) => ({
+      leads: state.leads.map((item) =>
+        item.id === closed.id ? { ...item, status: "success" as const } : item
+      ),
+    }))
+
+    const result = useLeadStore.getState().updateLead(first.id, {
+      ...createInput(),
+      email: "closed@example.com",
+      phoneNumber: "08999999999",
+    })
+
+    expect(result.ok).toBe(true)
+  })
+
+  it("skips the conflict check when editing a closed lead", () => {
+    const active = addTestLead()
+    const closed = addTestLead({
+      email: "closed@example.com",
+      phoneNumber: "08999999999",
+    })
+    useLeadStore.setState((state) => ({
+      leads: state.leads.map((item) =>
+        item.id === closed.id ? { ...item, status: "failed" as const } : item
+      ),
+    }))
+
+    const result = useLeadStore.getState().updateLead(closed.id, {
+      ...createInput(),
+      email: active.email,
+      phoneNumber: active.phoneNumber,
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.lead.email).toBe(active.email)
+    expect(result.lead.phoneNumber).toBe(active.phoneNumber)
+  })
+
+  it("returns not-found for an unknown lead", () => {
+    const result = useLeadStore.getState().updateLead("missing", createInput())
+
+    expect(result).toEqual({ ok: false, reason: "not-found" })
+  })
+})

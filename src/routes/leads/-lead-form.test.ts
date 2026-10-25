@@ -1,7 +1,7 @@
 import { addDays, startOfToday, subDays } from "date-fns"
 import { describe, expect, it } from "vitest"
 
-import { leadFormSchema } from "./-lead-form"
+import { createLeadFormSchema, leadFormSchema } from "./-lead-form"
 
 const validValues = {
   fullName: "Budi Santoso",
@@ -118,5 +118,37 @@ describe("leadFormSchema", () => {
     expect(result.data.fullName).toBe("Budi Santoso")
     expect(result.data.email).toBe("budi@example.com")
     expect(result.data.phoneNumber).toBe("08123456789")
+  })
+})
+
+describe("createLeadFormSchema", () => {
+  it("accepts keeping the original past next follow-up date", () => {
+    const originalNextFollowUpDate = subDays(startOfToday(), 3)
+    const schema = createLeadFormSchema({ originalNextFollowUpDate })
+
+    const result = schema.safeParse({
+      ...validValues,
+      nextFollowUpDate: originalNextFollowUpDate,
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects a different past next follow-up date", () => {
+    const schema = createLeadFormSchema({
+      originalNextFollowUpDate: subDays(startOfToday(), 3),
+    })
+
+    const result = schema.safeParse({
+      ...validValues,
+      nextFollowUpDate: subDays(startOfToday(), 1),
+    })
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+
+    expect(result.error.issues[0]?.message).toBe(
+      "Next follow-up date cannot be in the past"
+    )
   })
 })

@@ -3,11 +3,17 @@ import {
   INTERESTED_VENUES_ITEMS,
   LEAD_SOURCES_ITEMS,
 } from "@/routes/leads/-data"
-import { type LeadFormValues, leadFormSchema } from "@/routes/leads/-lead-form"
+import type { Lead } from "@/routes/leads/-lead"
+import {
+  type LeadFormValues,
+  createLeadFormSchema,
+  leadFormSchema,
+} from "@/routes/leads/-lead-form"
 import { useLeadStore } from "@/routes/leads/-lead-store"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { startOfToday } from "date-fns"
-import { Controller, useForm } from "react-hook-form"
+import { useEffect } from "react"
+import { Controller, type DefaultValues, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -35,37 +41,64 @@ import {
   SelectValue,
 } from "./ui/select"
 
-type CreateLeadDialogProps = {
-  onCreated?: () => void
+type LeadFormDialogProps = {
+  lead?: Lead
+  open: boolean
+  onSubmitted?: () => void
 }
 
-export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
+function getDefaultValues(lead?: Lead): DefaultValues<LeadFormValues> {
+  return {
+    fullName: lead?.fullName ?? "",
+    phoneNumber: lead?.phoneNumber ?? "",
+    email: lead?.email ?? "",
+    leadSource: lead?.leadSource ?? "",
+    interestedVenue: lead?.interestedVenue ?? "",
+    assignedSalesConsultant: lead?.assignedSalesConsultant ?? "",
+    nextFollowUpDate: lead?.nextFollowUpDate,
+  }
+}
+
+export const LeadFormDialog = ({
+  lead,
+  open,
+  onSubmitted,
+}: LeadFormDialogProps) => {
   const addLead = useLeadStore((state) => state.addLead)
+  const updateLead = useLeadStore((state) => state.updateLead)
+  const isEdit = lead !== undefined
+
   const form = useForm<LeadFormValues>({
-    resolver: zodResolver(leadFormSchema),
-    defaultValues: {
-      fullName: "",
-      phoneNumber: "",
-      email: "",
-      leadSource: "",
-      interestedVenue: "",
-      assignedSalesConsultant: "",
-      nextFollowUpDate: undefined,
-    },
+    resolver: zodResolver(
+      lead
+        ? createLeadFormSchema({
+            originalNextFollowUpDate: lead.nextFollowUpDate,
+          })
+        : leadFormSchema
+    ),
+    defaultValues: getDefaultValues(lead),
   })
 
+  useEffect(() => {
+    if (open) {
+      form.reset(getDefaultValues(lead))
+    }
+  }, [open, lead, form])
+
   function onSubmit(data: LeadFormValues) {
-    const result = addLead({
-      fullName: data.fullName,
-      phoneNumber: data.phoneNumber,
-      email: data.email,
-      leadSource: data.leadSource,
-      interestedVenue: data.interestedVenue,
-      assignedSalesConsultant: data.assignedSalesConsultant,
-      nextFollowUpDate: data.nextFollowUpDate,
-    })
+    const result = lead ? updateLead(lead.id, data) : addLead(data)
 
     if (!result.ok) {
+      if ("reason" in result) {
+        toast.add({
+          title: "Lead not found",
+          description:
+            "This lead may have been removed, or the link is no longer valid.",
+          type: "error",
+        })
+        return
+      }
+
       if (result.errors.email) {
         form.setError("email", {
           type: "validate",
@@ -87,21 +120,30 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
       return
     }
 
-    toast.add({
-      title: "Lead created",
-      description: `${result.lead.fullName} has been added to your leads.`,
-      type: "success",
-    })
-    form.reset()
-    onCreated?.()
+    toast.add(
+      lead
+        ? {
+            title: "Lead updated",
+            description: `${result.lead.fullName} has been updated.`,
+            type: "success",
+          }
+        : {
+            title: "Lead created",
+            description: `${result.lead.fullName} has been added to your leads.`,
+            type: "success",
+          }
+    )
+    onSubmitted?.()
   }
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Create Lead</DialogTitle>
+        <DialogTitle>{isEdit ? "Edit Lead" : "Create Lead"}</DialogTitle>
         <DialogDescription>
-          Fill in the details below to create a new lead.
+          {isEdit
+            ? "Update the details of this lead."
+            : "Fill in the details below to create a new lead."}
         </DialogDescription>
       </DialogHeader>
 
@@ -306,11 +348,15 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
 
       <DialogFooter>
         <Field orientation="horizontal">
-          <Button type="button" variant="outline" onClick={() => form.reset()}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => form.reset(getDefaultValues(lead))}
+          >
             Reset
           </Button>
           <Button type="submit" form="form-lead">
-            Submit
+            {isEdit ? "Save changes" : "Submit"}
           </Button>
         </Field>
       </DialogFooter>

@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import { CreateLeadDialog } from "./create-lead-dialog"
+import { LeadFormDialog } from "./lead-form-dialog"
 import { Dialog, DialogTrigger } from "./ui/dialog"
 
 export function NavMain({
@@ -40,7 +40,10 @@ export function NavMain({
                 <IconCirclePlusFilled />
                 <span>Create Lead</span>
               </SidebarMenuButton>
-              <CreateLeadDialog onCreated={() => setIsCreateLeadOpen(false)} />
+              <LeadFormDialog
+                open={isCreateLeadOpen}
+                onSubmitted={() => setIsCreateLeadOpen(false)}
+              />
             </Dialog>
           </SidebarMenuItem>
         </SidebarMenu>

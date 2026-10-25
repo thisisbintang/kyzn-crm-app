@@ -1,27 +1,14 @@
-import { IconArrowNarrowDown, IconDots } from "@tabler/icons-react"
-import { Link } from "@tanstack/react-router"
+import { IconArrowNarrowDown } from "@tabler/icons-react"
 import { createColumnHelper } from "@tanstack/react-table"
 import { format } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 import { LEAD_STATUS_BADGE_VARIANTS, getLeadStatusLabel } from "./-data"
 import { type DataTableFeatures } from "./-data-table-features"
 import { type Lead } from "./-lead"
-import { LeadStatusRadioGroup } from "./-lead-status-menu"
+import { LeadRowActions } from "./-lead-row-actions"
 
 // Use `accessor` for data columns and `display` for columns without one.
 const columnHelper = createColumnHelper<DataTableFeatures, Lead>()
@@ -82,41 +69,6 @@ export const columns = columnHelper.columns([
   }),
   columnHelper.display({
     id: "actions",
-    cell: ({ row }) => {
-      const lead = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
-            <span className="sr-only">Open menu</span>
-            <IconDots />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(lead.id)}
-              >
-                Copy lead ID
-              </DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Change status</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <LeadStatusRadioGroup lead={lead} />
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                render={
-                  <Link to="/leads/$uuid/detail" params={{ uuid: lead.id }} />
-                }
-              >
-                View lead details
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
+    cell: ({ row }) => <LeadRowActions lead={row.original} />,
   }),
 ])

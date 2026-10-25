@@ -1,8 +1,9 @@
 import { IconArrowLeft, IconChevronDown, IconCopy } from "@tabler/icons-react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { format } from "date-fns"
-import { type ReactNode } from "react"
+import { type ReactNode, useState } from "react"
 
+import { LeadFormDialog } from "@/components/lead-form-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Dialog } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +79,8 @@ function CopyLeadIdButton({ leadId }: { leadId: string }) {
 }
 
 function LeadDetailCard({ lead }: { lead: Lead }) {
+  const [isEditOpen, setIsEditOpen] = useState(false)
+
   return (
     <Card>
       <CardHeader>
@@ -87,6 +91,13 @@ function LeadDetailCard({ lead }: { lead: Lead }) {
             <Badge variant={LEAD_STATUS_BADGE_VARIANTS[lead.status]}>
               {getLeadStatusLabel(lead.status)}
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditOpen(true)}
+            >
+              Edit
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={<Button variant="outline" size="sm" />}
@@ -98,6 +109,13 @@ function LeadDetailCard({ lead }: { lead: Lead }) {
                 <LeadStatusRadioGroup lead={lead} />
               </DropdownMenuContent>
             </DropdownMenu>
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+              <LeadFormDialog
+                lead={lead}
+                open={isEditOpen}
+                onSubmitted={() => setIsEditOpen(false)}
+              />
+            </Dialog>
           </div>
         </CardAction>
       </CardHeader>
