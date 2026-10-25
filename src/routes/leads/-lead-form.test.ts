@@ -1,3 +1,4 @@
+import { addDays, startOfToday, subDays } from "date-fns"
 import { describe, expect, it } from "vitest"
 
 import { leadFormSchema } from "./-lead-form"
@@ -9,17 +10,17 @@ const validValues = {
   leadSource: "Website",
   interestedVenue: "KYZN Bekasi",
   assignedSalesConsultant: "John Doe",
-  nextFollowUpDate: new Date("2026-02-01T00:00:00.000Z"),
+  nextFollowUpDate: addDays(startOfToday(), 1),
 }
 
 describe("leadFormSchema", () => {
-  it("accepts valid values without a last contact date", () => {
+  it("accepts valid values", () => {
     const result = leadFormSchema.safeParse(validValues)
 
     expect(result.success).toBe(true)
   })
 
-  it("requires every field except the last contact date", () => {
+  it("requires every field", () => {
     const result = leadFormSchema.safeParse({
       fullName: "",
       phoneNumber: "",
@@ -76,6 +77,30 @@ describe("leadFormSchema", () => {
 
     expect(result.error.issues[0]?.message).toBe(
       "Next follow-up date is required"
+    )
+  })
+
+  it("accepts today as a next follow-up date", () => {
+    const result = leadFormSchema.safeParse({
+      ...validValues,
+      nextFollowUpDate: startOfToday(),
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects a next follow-up date before today", () => {
+    const result = leadFormSchema.safeParse({
+      ...validValues,
+      nextFollowUpDate: subDays(startOfToday(), 1),
+    })
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+
+    expect(result.error.issues[0]?.path.join(".")).toBe("nextFollowUpDate")
+    expect(result.error.issues[0]?.message).toBe(
+      "Next follow-up date cannot be in the past"
     )
   })
 

@@ -1,5 +1,5 @@
 import type { PopoverTriggerProps } from "@base-ui/react"
-import { format } from "date-fns"
+import { format, startOfDay } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,12 @@ import {
 export function DatePicker(
   props: {
     date?: Date
+    minDate?: Date
     onSelectDate: (date: Date | undefined) => void
   } & Pick<PopoverTriggerProps, "id">
 ) {
+  const minDate = props.minDate ? startOfDay(props.minDate) : undefined
+
   return (
     <Popover>
       <PopoverTrigger
@@ -36,6 +39,8 @@ export function DatePicker(
           mode="single"
           selected={props.date}
           onSelect={(value) => props.onSelectDate(value)}
+          disabled={minDate ? { before: minDate } : undefined}
+          startMonth={minDate}
         />
       </PopoverContent>
     </Popover>

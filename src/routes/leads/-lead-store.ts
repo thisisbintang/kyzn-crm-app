@@ -50,7 +50,7 @@ function createLead(input: NewLeadInput): Lead {
     interestedVenue: input.interestedVenue,
     assignedSalesConsultant: input.assignedSalesConsultant,
     creationDate: new Date(),
-    lastContactDate: input.lastContactDate,
+    lastContactDate: null,
     nextFollowUpDate: input.nextFollowUpDate,
   }
 }

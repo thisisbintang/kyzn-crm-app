@@ -28,7 +28,6 @@ export type NewLeadInput = {
   leadSource: string
   interestedVenue: string
   assignedSalesConsultant: string
-  lastContactDate: Date | null
   nextFollowUpDate: Date
 }
 

@@ -1,3 +1,4 @@
+import { startOfToday } from "date-fns"
 import * as z from "zod"
 
 export const leadFormSchema = z.object({
@@ -25,8 +26,12 @@ export const leadFormSchema = z.object({
     .string()
     .trim()
     .min(1, "Assigned sales consultant is required"),
-  lastContactDate: z.date().optional(),
-  nextFollowUpDate: z.date({ error: "Next follow-up date is required" }),
+  nextFollowUpDate: z
+    .date({ error: "Next follow-up date is required" })
+    .refine(
+      (date) => date >= startOfToday(),
+      "Next follow-up date cannot be in the past"
+    ),
 })
 
 export type LeadFormValues = z.infer<typeof leadFormSchema>

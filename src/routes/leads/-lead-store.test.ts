@@ -11,7 +11,6 @@ function createInput(overrides: Partial<NewLeadInput> = {}): NewLeadInput {
     leadSource: "Website",
     interestedVenue: "KYZN Bekasi",
     assignedSalesConsultant: "John Doe",
-    lastContactDate: null,
     nextFollowUpDate: new Date("2026-02-01T00:00:00.000Z"),
     ...overrides,
   }
@@ -33,6 +32,7 @@ describe("addLead", () => {
     expect(result.lead.status).toBe("pending")
     expect(result.lead.creationDate).toBeInstanceOf(Date)
     expect(result.lead.email).toBe("budi@example.com")
+    expect(result.lead.lastContactDate).toBeNull()
     expect(useLeadStore.getState().leads).toEqual([result.lead])
   })
 
@@ -132,12 +132,18 @@ describe("persistence", () => {
   })
 
   it("revives ISO dates when rehydrating", async () => {
-    const result = useLeadStore.getState().addLead(
-      createInput({
-        lastContactDate: new Date("2026-01-15T00:00:00.000Z"),
-      })
-    )
+    const result = useLeadStore.getState().addLead(createInput())
     expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    useLeadStore.setState({
+      leads: [
+        {
+          ...result.lead,
+          lastContactDate: new Date("2026-01-15T00:00:00.000Z"),
+        },
+      ],
+    })
 
     const raw = localStorage.getItem(LEADS_STORAGE_KEY) as string
     useLeadStore.setState({ leads: [] })
@@ -191,13 +197,15 @@ describe("changeLeadStatus", () => {
 
   it("keeps an existing last contact date", () => {
     const lastContactDate = new Date("2026-01-15T00:00:00.000Z")
-    const added = useLeadStore
-      .getState()
-      .addLead(createInput({ lastContactDate }))
+    const added = useLeadStore.getState().addLead(createInput())
 
     if (!added.ok) {
       throw new Error("Expected the lead to be created")
     }
+
+    useLeadStore.setState({
+      leads: [{ ...added.lead, lastContactDate }],
+    })
 
     const result = useLeadStore
       .getState()

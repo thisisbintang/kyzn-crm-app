@@ -6,6 +6,7 @@ import {
 import { type LeadFormValues, leadFormSchema } from "@/routes/leads/-lead-form"
 import { useLeadStore } from "@/routes/leads/-lead-store"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { startOfToday } from "date-fns"
 import { Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -49,7 +50,6 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
       leadSource: "",
       interestedVenue: "",
       assignedSalesConsultant: "",
-      lastContactDate: undefined,
       nextFollowUpDate: undefined,
     },
   })
@@ -62,7 +62,6 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
       leadSource: data.leadSource,
       interestedVenue: data.interestedVenue,
       assignedSalesConsultant: data.assignedSalesConsultant,
-      lastContactDate: data.lastContactDate ?? null,
       nextFollowUpDate: data.nextFollowUpDate,
     })
 
@@ -276,32 +275,6 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
           />
 
           <Controller
-            name="lastContactDate"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="form-lead-lastContactDate">
-                  Last Contact Date
-                </FieldLabel>
-                <DatePicker
-                  id="form-lead-lastContactDate"
-                  onSelectDate={(date) => {
-                    form.setValue("lastContactDate", date, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                  }}
-                  date={field.value}
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-
-          <Controller
             name="nextFollowUpDate"
             control={form.control}
             render={({ field, fieldState }) => (
@@ -311,6 +284,7 @@ export const CreateLeadDialog = ({ onCreated }: CreateLeadDialogProps) => {
                 </FieldLabel>
                 <DatePicker
                   id="form-lead-nextFollowUpDate"
+                  minDate={startOfToday()}
                   onSelectDate={(date) => {
                     if (!date) return
                     form.setValue("nextFollowUpDate", date, {
